@@ -19,7 +19,12 @@ from langchain.output_parsers.json import SimpleJsonOutputParser
 from pymongo import MongoClient
 
 # Load environment variables
-load_dotenv()
+# load_dotenv()
+OPENAI_KEY = st.secrets["OPENAI_API_KEY"]
+PINECONE_API_KEY = st.secrets['PINECONE_API_KEY']
+MONGO_URL = st.secrets['MONGO_URL']
+MONGO_DB_NAME = st.secrets['MONGO_DB_NAME']
+MIDDLEWARE_URL = st.secrets['MIDDLEWARE_URL']
 
 # Define the TypedDict for the new JSON format
 class Step(TypedDict):
@@ -134,12 +139,12 @@ prompt = ChatPromptTemplate.from_messages([("system", "{system}"), ("human", "{i
 st.title("Chatbot Test Case Generator")
 
 # Ask for OpenAI API key and agent ID
-openai_api_key = st.text_input("Enter OpenAI API Key", type="password")
+# openai_api_key = st.text_input("Enter OpenAI API Key", type="password")
 agent_id = st.text_input("Enter Agent ID")
 
 if openai_api_key and agent_id:
     # Initialize the language model with the provided API key
-    os.environ['OPENAI_API_KEY'] = openai_api_key
+    os.environ['OPENAI_API_KEY'] = OPENAI_KEY
     llm = ChatOpenAI(model="gpt-4o")
 
     user_input = st.text_area("Enter your input text here")
@@ -157,7 +162,7 @@ if openai_api_key and agent_id:
             '''st.subheader("Generated Test Cases")
             st.json(response)'''
             
-            from final_ import evaluate_test_cases
+            from evaluate import evaluate_test_cases
             
             result = evaluate_test_cases(response, agent_id)
             
