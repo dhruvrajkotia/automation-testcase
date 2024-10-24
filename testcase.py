@@ -21,10 +21,6 @@ from pymongo import MongoClient
 # Load environment variables
 # load_dotenv()
 OPENAI_KEY = st.secrets["OPENAI_API_KEY"]
-PINECONE_API_KEY = st.secrets['PINECONE_API_KEY']
-MONGO_URL = st.secrets['MONGO_URL']
-MONGO_DB_NAME = st.secrets['MONGO_DB_NAME']
-MIDDLEWARE_URL = st.secrets['MIDDLEWARE_URL']
 
 # Define the TypedDict for the new JSON format
 class Step(TypedDict):
@@ -158,9 +154,6 @@ if agent_id:
             structured_llm = llm.with_structured_output(TestCases)
             few_shot_structured_llm = prompt | structured_llm
             response = few_shot_structured_llm.invoke(input_data)
-            
-            '''st.subheader("Generated Test Cases")
-            st.json(response)'''
             
             from evaluate import evaluate_test_cases
             
