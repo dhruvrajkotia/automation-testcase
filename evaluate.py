@@ -18,10 +18,9 @@ import streamlit as st
 
 
 # load_dotenv()
-
+OPENAI_KEY = st.secrets['OPENAI_API_KEY']
 PINECONE_API_KEY = st.secrets['PINECONE_API_KEY']
 MONGO_URL = st.secrets['MONGO_URL']
-MONGO_DB_NAME = st.secrets['MONGO_DB_NAME']
 MIDDLEWARE_URL = st.secrets['MIDDLEWARE_URL']
 
 st.write(
@@ -34,8 +33,7 @@ class MongoDBConnection:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(MongoDBConnection, cls).__new__(cls)
-            cls._instance.connection = MongoClient(os.environ.get(
-                'MONGO_URL', 'mongodb://localhost:27017/'), tls=True, tlsAllowInvalidCertificates=True)
+            cls._instance.connection = MongoClient(MONGO_URL, 'mongodb://localhost:27017/'), tls=True, tlsAllowInvalidCertificates=True)
         return cls._instance
 
     def get_connection(self):
@@ -51,7 +49,7 @@ def evaluate_test_cases(payload: dict, id):
     # Initialize embeddings
     embeddings = OpenAIEmbeddings(
         model="text-embedding-3-small",
-        openai_api_key=os.environ.get("OPENAI_API_KEY")
+        openai_api_key=OPENAI_KEY
     )
 
     llm = ChatOpenAI(
@@ -60,7 +58,8 @@ def evaluate_test_cases(payload: dict, id):
         temperature=0,
         max_tokens=None,
         timeout=None,
-        max_retries=2
+        max_retries=2,
+        api_key=OPENAI_KEY
     )
 
     SYSTEM_PROMPT = """
@@ -116,7 +115,7 @@ def evaluate_test_cases(payload: dict, id):
         index_name=bot_config_details['ai_config']['kb_configuration']['index_name'],
         embedding=embeddings,
         namespace=bot_config_details['ai_config']['kb_configuration']['namespace'],
-        pinecone_api_key=os.environ.get("PINECONE_API_KEY")
+        pinecone_api_key=PINECONE_API_KEY
     )
     retriever = vectorstore.as_retriever(
         search_kwargs={'k': 5, 'filter': {"id_kb": {"$in": kbs}}}
@@ -156,7 +155,7 @@ def evaluate_test_cases(payload: dict, id):
 
     # Function to create a new session
     def create_session():
-        url = f"{os.environ.get('MIDDLEWARE_URL')}/conversations"
+        url = f"{MIDDLEWARE_URL}/conversations"
         payload = {
             "bot_id": agent_id,
             "isTestMode": True
