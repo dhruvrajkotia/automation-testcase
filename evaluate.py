@@ -14,9 +14,16 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.output_parsers.json import SimpleJsonOutputParser
 from pymongo import MongoClient
+import streamlit as st
 
 
-load_dotenv()
+# load_dotenv()
+
+PINECONE_API_KEY = st.secrets['PINECONE_API_KEY']
+MONGO_URL = st.secrets['MONGO_URL']
+MONGO_DB_NAME = st.secrets['MONGO_DB_NAME']
+MIDDLEWARE_URL = st.secrets['MIDDLEWARE_URL']
+
 
 class MongoDBConnection:
     _instance = None
