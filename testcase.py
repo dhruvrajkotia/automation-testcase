@@ -142,7 +142,7 @@ st.title("Chatbot Test Case Generator")
 # openai_api_key = st.text_input("Enter OpenAI API Key", type="password")
 agent_id = st.text_input("Enter Agent ID")
 
-if openai_api_key and agent_id:
+if agent_id:
     # Initialize the language model with the provided API key
     os.environ['OPENAI_API_KEY'] = OPENAI_KEY
     llm = ChatOpenAI(model="gpt-4o")
