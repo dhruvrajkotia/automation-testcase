@@ -33,7 +33,7 @@ class MongoDBConnection:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(MongoDBConnection, cls).__new__(cls)
-            cls._instance.connection = MongoClient(MONGO_URL, 'mongodb://localhost:27017/'), tls=True, tlsAllowInvalidCertificates=True)
+            cls._instance.connection = MongoClient(MONGO_URL, tls=True, tlsAllowInvalidCertificates=True)
         return cls._instance
 
     def get_connection(self):
