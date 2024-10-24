@@ -24,6 +24,9 @@ MONGO_URL = st.secrets['MONGO_URL']
 MONGO_DB_NAME = st.secrets['MONGO_DB_NAME']
 MIDDLEWARE_URL = st.secrets['MIDDLEWARE_URL']
 
+st.write(
+    "Has environment variables been set:", PINECONE_API_KEY
+)
 
 class MongoDBConnection:
     _instance = None
