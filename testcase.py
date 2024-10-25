@@ -1,37 +1,31 @@
+import os
 import streamlit as st
-from typing import List, Dict, Union
+from typing import List, Union
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from typing_extensions import Annotated, TypedDict
-import json
+from typing_extensions import TypedDict
 from langchain_core.prompts import ChatPromptTemplate
-import os
-import requests
-from bson import ObjectId
-from ragas import evaluate
-from ragas.metrics import faithfulness, answer_relevancy
-from datasets import Dataset
-from langchain_openai import OpenAIEmbeddings
-from langserve import RemoteRunnable
-from pinecone import Pinecone
-from langchain_pinecone import PineconeVectorStore
-from langchain.output_parsers.json import SimpleJsonOutputParser
-from pymongo import MongoClient
+from evaluate import evaluate_test_cases, is_valid_agent_id
+
 
 # Load environment variables
-# load_dotenv()
-OPENAI_KEY = st.secrets["OPENAI_API_KEY"]
+load_dotenv()
+OPENAI_KEY = os.getenv("OPENAI_API_KEY")
 
 # Define the TypedDict for the new JSON format
+
+
 class Step(TypedDict):
     """Defines a step in a test case."""
     step: str
     user_input: str
     expected_response: str
 
+
 class SuccessCriteria(TypedDict):
     """Defines the success criteria for a test case."""
     threshold: float
+
 
 class TestCase(TypedDict):
     """Defines a test case."""
@@ -41,9 +35,11 @@ class TestCase(TypedDict):
     success_criteria: Union[str, SuccessCriteria]
     failure_criteria: str
 
+
 class TestCases(TypedDict):
     """Defines the structure for test cases."""
     test_cases: List[TestCase]
+
 
 # Define the system prompt
 system_prompt = """You are an intelligent JSON creation expert who is responsible for testing usecases of chatbot, skilled in intelligently converting user input into structured JSON formats following a predefined schema. Your primary role is to interpret user queries and provide structured JSON outputs based on the context of the conversation.
@@ -70,7 +66,7 @@ There can be multiple test cases in a single user input, so identify them and cr
        - **user_input**: The user's input for the step.
        - **expected_response**: The expected response for the step.
      - **success_criteria**: This contains below value and it is a compulsory field.
-         - There is one condition: If the user input type is 'FLOW' or related to Human Handoff user. In that case just reply in the below format: "success_criteria": "API returns 'your request is passed to the human'" and do not provide threshold key in the JSON like provided in the example below.
+         - There is one condition: If the user input type is 'FLOW' do not provide threshold key in the JSON like provided in the example below.
          - **threshold**: The default value is 0.8 unless it is specified otherwise in the user input.
      - **failure_criteria**: The criteria for considering the test case a failure.
 
@@ -100,8 +96,8 @@ There can be multiple test cases in a single user input, so identify them and cr
                     "expected_response": "API response indicates request passed to human"
                 }
             ],
-        "success_criteria": "API returns 'your request is passed to the human'",
-        "failure_criteria": "Any deviation from expected responses or API error"
+        "success_criteria": "API returns 'your request is passed to the human", // this can be based on the test case. so do not make it default for all the flow test cases. create based on the user description
+        "failure_criteria": "Any deviation from expected responses or API error" //this can be based on the test case. so do not make it default for all the flow test cases. create based on the user description
         },
         {
             "description": "Checking the KB Answer",
@@ -129,37 +125,54 @@ There can be multiple test cases in a single user input, so identify them and cr
 """
 
 # Create the prompt template
-prompt = ChatPromptTemplate.from_messages([("system", "{system}"), ("human", "{input}")])
+prompt = ChatPromptTemplate.from_messages(
+    [("system", "{system}"), ("human", "{input}")])
 
 # Initialize Streamlit app
-st.title("Chatbot Test Case Generator")
+st.title("IndemnTestGen: AI-Driven Test Automation Excellence")
 
 # Ask for OpenAI API key and agent ID
 # openai_api_key = st.text_input("Enter OpenAI API Key", type="password")
-agent_id = st.text_input("Enter Agent ID")
+agent_id = st.text_input("Agent ID")
+
+if 'result' not in st.session_state:
+    st.session_state.result = None
 
 if agent_id:
+    if not is_valid_agent_id(agent_id):
+        st.error("Invalid Agent ID. Please enter a valid Agent ID.")
     # Initialize the language model with the provided API key
-    os.environ['OPENAI_API_KEY'] = OPENAI_KEY
-    llm = ChatOpenAI(model="gpt-4o")
+    else:
+        os.environ['OPENAI_API_KEY'] = OPENAI_KEY
+        llm = ChatOpenAI(model="gpt-4o")
+        user_input = st.text_area("Input Test Cases", height=400)
+        button = st.button("Run Test Case Evaluation",
+                           disabled=not user_input)
 
-    user_input = st.text_area("Enter your input text here")
+        if button and user_input:
+            if user_input:
+                input_data = {
+                    "system": system_prompt,
+                    "input": user_input
+                }
+                structured_llm = llm.with_structured_output(TestCases)
+                few_shot_structured_llm = prompt | structured_llm
+                response = few_shot_structured_llm.invoke(input_data)
+                result = evaluate_test_cases(response, agent_id)
+                st.session_state.result = result
 
-    if st.button("Generate Test Cases"):
-        if user_input:
-            input_data = {
-                "system": system_prompt,
-                "input": user_input
-            }
-            structured_llm = llm.with_structured_output(TestCases)
-            few_shot_structured_llm = prompt | structured_llm
-            response = few_shot_structured_llm.invoke(input_data)
-            
-            from evaluate import evaluate_test_cases
-            
-            result = evaluate_test_cases(response, agent_id)
-            
-            st.subheader("Evaluation Result")
-            st.json(result)
-        else:
-            st.error("Please enter some input text.")
+
+if st.session_state.result:
+    result = st.session_state.result
+
+    st.subheader("Test Case Results")
+    index = 1
+    for test_case in result["test_cases"]:
+        with st.expander(f"Test Case {index} - {test_case['description']}",
+                         icon="✅" if test_case['test_result']['result'] == 'Passed' else '❌'):
+            st.json(test_case['test_result']['steps'])
+        index += 1
+
+    st.subheader("Detailed Process Log")
+    with st.expander("Click here"):
+        st.json(result)
