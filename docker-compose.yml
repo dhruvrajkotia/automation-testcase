@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  streamlit-app:
+    build: .
+    container_name: streamlit_container
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    command: >
+      streamlit run /app/testcase.py
+      --server.port=8501
+      --server.address=0.0.0.0
