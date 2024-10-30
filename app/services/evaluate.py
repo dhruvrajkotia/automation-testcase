@@ -78,6 +78,10 @@ class EvaluateService:
         self.validate_agent_id()
         result = await run_in_threadpool(self.generate_test_cases)
         result = convert_numpy_types(result)  # Convert numpy types before returning
+
+        ### EVALUATE FUNCTION
+        
+
         return result
     # def process_test_case(self, user_input: str) -> Union[dict, None]:
     #     """

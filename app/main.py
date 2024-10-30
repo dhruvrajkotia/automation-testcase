@@ -22,6 +22,6 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 async def read_root():
-    return {"message": "MongoDB connection managed by FastAPI lifespan"}
+    return {"message": "App Started"}
 
 app.include_router(evaluate.router)
