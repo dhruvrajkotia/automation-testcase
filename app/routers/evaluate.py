@@ -5,7 +5,7 @@ from ..services.evaluate import EvaluateService
 router = APIRouter(prefix="/testcase", tags=["evaluate"])
 
 
-@router.post("/", response_model=schemas.EvaluateResponse)
+@router.post("/")
 async def evaluate_testcase(testcase: schemas.Evaluate):
     """
     Endpoint to evaluate test cases using the EvaluateService.

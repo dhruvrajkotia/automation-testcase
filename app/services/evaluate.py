@@ -7,6 +7,9 @@ from ..schemas import TestCases
 from bson import ObjectId
 from ..constants import SYSTEM_PROMPT_CONVERT_USER_TEXT_TO_TESTCASES
 from fastapi import HTTPException
+from fastapi.concurrency import run_in_threadpool
+import asyncio
+from ..utils import convert_numpy_types
 
 
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
@@ -34,7 +37,7 @@ prompt = ChatPromptTemplate.from_messages(
 class EvaluateService:
     def __init__(self, payload: dict):
         self.agent_id = payload.get("agent_id")
-        self.testcases = payload.get("testcases")
+        self.user_input = payload.get("user_input")
 
     async def validate_agent_id(self) -> bool:
         from ..main import app
@@ -54,31 +57,28 @@ class EvaluateService:
 
         except Exception as e:
             raise ValueError(f"Error validating agent ID: {str(e)}")
+        
+    def generate_test_cases(self) -> dict:
+        input_data = {
+            "system": SYSTEM_PROMPT_CONVERT_USER_TEXT_TO_TESTCASES,
+            "input": self.user_input
+        }
+        structured_llm = ChatOpenAI(model="gpt-4o").with_structured_output(TestCases)
+        few_shot_structured_llm = prompt | structured_llm
+        response = few_shot_structured_llm.invoke(input_data)
+        # from evaluator import evaluate_test_cases
+        # result = evaluate_test_cases(response, agent_id)
+        return response   
 
-    def start_process(self) -> dict:
+
+    async def start_process(self) -> dict:
         """
         Orchestrates the overall process of validation and LLM invocation.
         """
-        input_data = {
-            "system": SYSTEM_PROMPT_CONVERT_USER_TEXT_TO_TESTCASES,
-            "input": self.testcases
-        }
-
-        # Set up structured LLM with the strict Pydantic TestCases model
-        structured_llm = llm.with_structured_output(TestCases)
-        few_shot_structured_llm = prompt | structured_llm
-
-        try:
-            # Invoke the LLM with the input data
-            response = few_shot_structured_llm.invoke(input_data)
-            print(response)
-            return response.dict()
-
-        except ValueError as ve:
-            raise HTTPException(status_code=422, detail=str(ve))
-        except Exception as e:
-            raise HTTPException(
-                status_code=500, detail=f"Error processing test cases: {str(e)}")
+        self.validate_agent_id()
+        result = await run_in_threadpool(self.generate_test_cases)
+        result = convert_numpy_types(result)  # Convert numpy types before returning
+        return result
     # def process_test_case(self, user_input: str) -> Union[dict, None]:
     #     """
     #     Generates structured JSON output from user input using the LLM.

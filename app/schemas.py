@@ -5,13 +5,14 @@ from pydantic import BaseModel, Field, StrictStr, StrictFloat
 
 
 class Evaluate(BaseModel):
+    user_input: str
     agent_id: str
-    testcases: str
+
 
 
 class EvaluateResponse(BaseModel):
+    user_input: str
     agent_id: str
-    testcases: str
 
 
 class Step(TypedDict):
