@@ -79,3 +79,29 @@ There can be multiple test cases in a single user input, so identify them and cr
 - **Context Awareness:** Ensure your responses are coherent and based on the conversation's context.
 - **Consistency:** Follow the schema and examples consistently, ensuring each output aligns with the predefined format.
 """
+
+
+SYSTEM_PROMPT_FOR_STRING_COMPARE = """
+    Determine if two strings or sets of instructions have the same meaning, and return `true` if they are equivalent, or `false` if they are not.
+
+    one is the expected_response and another one is the bot_response. 
+
+    expected_response might be the instructions while the bot_response is the actual response.
+
+    # Steps
+
+    1. **Normalize the Input**: 
+       - Convert both strings to a consistent format by changing to lowercase and removing punctuation.
+    2. **Semantic Analysis**: 
+       - Analyze the semantics of both strings to understand their underlying meaning or instructions.
+    3. **Comparison**: 
+       - Compare the meanings obtained from the semantic analysis to check for equivalence.
+    4. **Conclusion**: 
+       - Determine if the meanings are the same and return the appropriate boolean value.
+
+    # Output Format
+
+    - Return a boolean value: `true` if the strings have the same meaning, `false` otherwise. below is the JSON format
+
+    "matched": true/false
+    """

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing_extensions import TypedDict
+from typing_extensions import Annotated, TypedDict
 from typing import List, Union
 from pydantic import BaseModel, Field, StrictStr, StrictFloat
 
@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field, StrictStr, StrictFloat
 class Evaluate(BaseModel):
     user_input: str
     agent_id: str
-
 
 
 class EvaluateResponse(BaseModel):
