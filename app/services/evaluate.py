@@ -14,6 +14,28 @@ from ..schemas import TestCases
 from ..constants import SYSTEM_PROMPT_CONVERT_USER_TEXT_TO_TESTCASES, SYSTEM_PROMPT_FOR_STRING_COMPARE
 from ..utils import convert_numpy_types
 from langserve import RemoteRunnable
+import json
+import numpy as np
+
+def sanitize_for_json(data):
+    """Recursively sanitize data for JSON serialization."""
+    if isinstance(data, dict):
+        return {key: sanitize_for_json(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [sanitize_for_json(item) for item in data]
+    elif isinstance(data, np.generic):  # Handle NumPy scalar types
+        return data.item()
+    elif isinstance(data, np.ndarray):  # Convert NumPy arrays to lists
+        return data.tolist()
+    elif isinstance(data, (np.float_, np.float32, np.float64)):
+        return float(data)
+    elif isinstance(data, (np.int_, np.int32, np.int64)):
+        return int(data)
+    elif isinstance(data, (np.bool_, bool)):
+        return bool(data)
+    else:
+        return data  # Return data as-is if it's already JSON-compatible
+
 
 # Load environment variables once
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
@@ -66,13 +88,14 @@ class EvaluateService:
         response = await run_in_threadpool(few_shot_structured_llm.invoke, input_data)
         return response.model_dump() if response else {}
 
-    async def start_process(self) -> dict:
+    async def start_process(self):
         """Orchestrates validation and LLM invocation."""
         await self.validate_agent_id()
         result = await self.generate_test_cases()
         test_result = await self.evaluate_test_cases(result, self.agent_id)
-        print(test_result)
-        return test_result
+        sanitized_test_result = sanitize_for_json(test_result)
+        print(sanitized_test_result)
+        return sanitized_test_result
 
     async def evaluate_test_cases(self, payload: dict, agent_id: str) -> Union[dict, None]:
         from ..main import app
@@ -162,7 +185,7 @@ class EvaluateService:
         test_case['test_result'] = {"steps": []}
         for step in test_case['steps']:
             result = await self._invoke_qna_step(
-                step, retriever, session_id, bot_details, kbs)
+                step, retriever, session_id, bot_details, kbs, test_case)
             test_case['test_result']['steps'].append(result)
             if not result['matched']:
                 test_case['test_result']['result'] = "Failed"
@@ -182,7 +205,7 @@ class EvaluateService:
         return {"step": step['step'], "user_input": user_input, "expected_response": expected_response,
                 "bot_response": response, "matched": matched, "result": "Passed" if matched else "Failed"}
 
-    async def _invoke_qna_step(self, step, retriever, session_id, bot_details, kbs):
+    async def _invoke_qna_step(self, step, retriever, session_id, bot_details, kbs, test_case_details):
         """Invokes a single step for QnA type test cases with RAGAS."""
         question, expected_answer = step['user_input'], step['expected_response']
         answer = await run_in_threadpool(remote_runnable.invoke, {
@@ -191,10 +214,10 @@ class EvaluateService:
             "init_parameters": {}, "session_id": session_id
         })
         contexts = [
-            doc.page_content async for doc in retriever.get_relevant_documents(question)]
+            doc.page_content for doc in retriever.get_relevant_documents(question)]
         relevancy_passed, relevancy_score = await self._evaluate_ragas(
-            question, answer, contexts, step['success_criteria']['threshold'])
-        return {"question": question, "expected_response": expected_answer, "bot_response": answer, "contexts": contexts,
+            question, answer, contexts, test_case_details['success_criteria']['threshold'])
+        return {"question": question, "expecxted_response": expected_answer, "bot_response": answer, "contexts": contexts,
                 "accuracy_score": relevancy_score, "matched": relevancy_passed, "result": "Passed" if relevancy_passed else "Failed"}
 
     async def _check_semantic_similarity(self, expected_response: str, bot_response: str) -> bool:
