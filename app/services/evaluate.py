@@ -12,9 +12,7 @@ from ragas import evaluate
 from ragas.metrics import faithfulness, answer_relevancy
 from ..schemas import TestCases
 from ..constants import SYSTEM_PROMPT_CONVERT_USER_TEXT_TO_TESTCASES, SYSTEM_PROMPT_FOR_STRING_COMPARE
-from ..utils import convert_numpy_types
 from langserve import RemoteRunnable
-import json
 import numpy as np
 
 def sanitize_for_json(data):
@@ -237,3 +235,7 @@ class EvaluateService:
                                          faithfulness, answer_relevancy])
         relevancy_score = result.to_pandas()['answer_relevancy'].iloc[0]
         return relevancy_score >= threshold, relevancy_score
+    
+    '''async def trigger_service(self):
+        result = await self.start_process()
+        return result'''

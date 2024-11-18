@@ -40,3 +40,6 @@ class TestCases(BaseModel):
     test_cases: List[TestCase] = Field(
         description="A list of test cases, each containing details like description, type, steps, success criteria, and failure criteria."
     )
+    def model_dump(self):
+        """Helper function to dump the data as a dictionary."""
+        return self.model_dump()
