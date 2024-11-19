@@ -1,3 +1,4 @@
+# app/main.py
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from app.database.mongodb_connect import startup_db_client, shutdown_db_client
@@ -18,9 +19,9 @@ async def lifespan(app: FastAPI):
 # Create the FastAPI app with lifespan management
 app = FastAPI(lifespan=lifespan)
 
-
 @app.get("/")
 async def read_root():
     return {"message": "App Started"}
 
+# Include other routers if needed
 app.include_router(evaluate.router)

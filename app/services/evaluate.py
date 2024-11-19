@@ -14,6 +14,9 @@ from ..schemas import TestCases
 from ..constants import SYSTEM_PROMPT_CONVERT_USER_TEXT_TO_TESTCASES, SYSTEM_PROMPT_FOR_STRING_COMPARE
 from langserve import RemoteRunnable
 import numpy as np
+from fastapi import FastAPI
+
+
 
 def sanitize_for_json(data):
     """Recursively sanitize data for JSON serialization."""
@@ -59,9 +62,11 @@ string_compare_prompt = ChatPromptTemplate.from_messages(
 
 
 class EvaluateService:
-    def __init__(self, payload: dict):
+    def __init__(self, payload: dict, app:FastAPI):
         self.agent_id = payload.get("agent_id")
         self.user_input = payload.get("user_input")
+        self.app = app
+        self.db = self.app.mongodb 
 
     async def validate_agent_id(self) -> bool:
         from ..main import app
@@ -72,6 +77,7 @@ class EvaluateService:
             if not agent_exists:
                 raise ValueError("Invalid agent ID provided.")
             return True
+            print('agent exists',agent_exists)
         except Exception as e:
             raise ValueError(f"Error validating agent ID: {str(e)}")
 
