@@ -1,16 +1,19 @@
+# app/logger.py
 import logging
 
-def setup_logger(name, log_file, level=logging.INFO):
-    """Function to set up a logger; this can be reused."""
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    handler = logging.FileHandler(log_file)
-    handler.setFormatter(formatter)
+# Create a custom logger
+logger = logging.getLogger(__name__)
 
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
-    logger.addHandler(handler)
+# Create handlers
+console_handler = logging.StreamHandler()
 
-    return logger
+# Set level of logging
+logger.setLevel(logging.INFO)
+console_handler.setLevel(logging.INFO)
 
-# Create a logger instance for the evaluate service
-evaluate_service_logger = setup_logger('evaluate_service', 'evaluate_service.log')
+# Create formatters and add it to handlers
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+
+# Add handlers to the logger
+logger.addHandler(console_handler)

@@ -62,11 +62,9 @@ string_compare_prompt = ChatPromptTemplate.from_messages(
 
 
 class EvaluateService:
-    def __init__(self, payload: dict, app:FastAPI):
+    def __init__(self, payload: dict):
         self.agent_id = payload.get("agent_id")
         self.user_input = payload.get("user_input")
-        self.app = app
-        self.db = self.app.mongodb 
 
     async def validate_agent_id(self) -> bool:
         from ..main import app
@@ -77,7 +75,6 @@ class EvaluateService:
             if not agent_exists:
                 raise ValueError("Invalid agent ID provided.")
             return True
-            print('agent exists',agent_exists)
         except Exception as e:
             raise ValueError(f"Error validating agent ID: {str(e)}")
 
@@ -90,7 +87,7 @@ class EvaluateService:
             model="gpt-4o").with_structured_output(TestCases)
         few_shot_structured_llm = prompt | structured_llm
         response = await run_in_threadpool(few_shot_structured_llm.invoke, input_data)
-        return response.model_dump() if response else {}
+        return response.__dict__ if response else {}
 
     async def start_process(self):
         """Orchestrates validation and LLM invocation."""
@@ -218,7 +215,7 @@ class EvaluateService:
             "init_parameters": {}, "session_id": session_id
         })
         contexts = [
-            doc.page_content for doc in retriever.get_relevant_documents(question)]
+            doc.page_content for doc in retriever.invoke(question)]
         relevancy_passed, relevancy_score = await self._evaluate_ragas(
             question, answer, contexts, test_case_details['success_criteria']['threshold'])
         return {"question": question, "expecxted_response": expected_answer, "bot_response": answer, "contexts": contexts,
