@@ -27,7 +27,7 @@ async def evaluate_testcase(testcase: schemas.Evaluate):
         raise HTTPException(
             status_code=500, detail=f"Internal server error: {e}")
 
-@router.post("/send_payload")
+@router.post("/trigger")
 async def send_payload(payload: schemas.Evaluate):
     """
     Endpoint to send a payload to RabbitMQ using the Publisher.
