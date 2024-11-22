@@ -1,5 +1,8 @@
 import os
+import uuid
 from pyairtable import Api
+
+myuuid = uuid.uuid4()
 
 # Initialize Airtable API
 api = Api(os.environ['AIRTABLE_API_KEY'])
@@ -7,11 +10,11 @@ table = api.table('appUDawuQbkse8NH0', 'tbly2kI0TujdTQhUH')
 
 def push_airtable(input_data, agent_id):
     output_records = []
-
     # Loop through each description in the input data
     for description_data in input_data:
         description = description_data.get("description")
         steps = description_data.get("steps", [])
+        testcaseId = str(myuuid)
         test_result = description_data.get("test_result", {}).get("steps", [])
         
         # Loop through each step of the description
@@ -26,6 +29,7 @@ def push_airtable(input_data, agent_id):
             # Generate the output record for this specific step
             output_record = {
                 "agent_id": agent_id,
+                "Testcase ID": testcaseId,
                 "Testcase": description,
                 "TestCase Type": description_data.get("type", ""),
                 "Step": step,
