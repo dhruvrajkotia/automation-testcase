@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from app.database.mongodb_connect import startup_db_client, shutdown_db_client
 from app.routers import evaluate
 from dotenv import load_dotenv
-
+import asyncio
 # Load environment variables from .env file
 load_dotenv()
 
@@ -14,9 +14,10 @@ async def lifespan(app: FastAPI):
     await startup_db_client(app)
     from app.consumer import start_rabbitmq_consumer
     import threading
-    thread = threading.Thread(target=start_rabbitmq_consumer, daemon=True)
-    thread.start()
+    consumer_task = asyncio.create_task(start_rabbitmq_consumer())
     yield
+    consumer_task.cancel()
+
     # Close the database connection
     await shutdown_db_client(app)
 

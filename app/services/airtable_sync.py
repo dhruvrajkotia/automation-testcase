@@ -6,7 +6,7 @@ myuuid = uuid.uuid4()
 
 # Initialize Airtable API
 api = Api(os.environ['AIRTABLE_API_KEY'])
-table = api.table('appUDawuQbkse8NH0', 'tbly2kI0TujdTQhUH')
+table = api.table('apppY6a9bwgWBzXgw', 'tblhs1txs1fVhLFYp')
 
 def push_airtable(input_data, agent_id):
     output_records = []

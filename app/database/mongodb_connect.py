@@ -1,6 +1,9 @@
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import FastAPI
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 async def startup_db_client(app: FastAPI):
@@ -13,7 +16,7 @@ async def startup_db_client(app: FastAPI):
         print(f"Connecting to MongoDB: {MONGO_URI}")
 
         app.mongodb_client = AsyncIOMotorClient(
-            MONGO_URI, tls=True, tlsAllowInvalidCertificates=True)
+            MONGO_URI, tls=True, tlsAllowInvalidCertificates=True,connectTimeoutMS=300000, socketTimeoutMS=300000 )
         app.mongodb = app.mongodb_client.get_database(MONGO_DB_NAME)
         print("MongoDB connected.")
     except Exception as e:

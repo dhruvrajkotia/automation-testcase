@@ -15,7 +15,9 @@ from ..constants import SYSTEM_PROMPT_CONVERT_USER_TEXT_TO_TESTCASES, SYSTEM_PRO
 from langserve import RemoteRunnable
 import numpy as np
 from fastapi import FastAPI
+from dotenv import load_dotenv
 
+load_dotenv()
 
 
 def sanitize_for_json(data):
