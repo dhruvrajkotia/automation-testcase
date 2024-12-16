@@ -2,21 +2,29 @@ import os
 import uuid
 from pyairtable import Api
 
-myuuid = uuid.uuid4()
-
 # Initialize Airtable API
 api = Api(os.environ['AIRTABLE_API_KEY'])
 table = api.table('apppY6a9bwgWBzXgw', 'tblhs1txs1fVhLFYp')
 
 def push_airtable(input_data, agent_id):
     output_records = []
+    description_ids = {}  # Dictionary to hold unique IDs for each description
+
     # Loop through each description in the input data
     for description_data in input_data:
         description = description_data.get("description")
         steps = description_data.get("steps", [])
-        testcaseId = str(myuuid)
         test_result = description_data.get("test_result", {}).get("steps", [])
+        description_type = description_data.get("type", "")
+
+        # Check if the description and type combo has an assigned ID
+        if description not in description_ids:
+            description_ids[description] = {}
+        if description_type not in description_ids[description]:
+            description_ids[description][description_type] = str(uuid.uuid4())
         
+        testcaseId = description_ids[description][description_type]
+
         # Loop through each step of the description
         for step_data, test_step in zip(steps, test_result):
             step = step_data.get("step", "")
@@ -31,7 +39,7 @@ def push_airtable(input_data, agent_id):
                 "agent_id": agent_id,
                 "Testcase ID": testcaseId,
                 "Testcase": description,
-                "TestCase Type": description_data.get("type", ""),
+                "TestCase Type": description_type,
                 "Step": step,
                 "User Input": user_input,
                 "Expected Response": expected_response,
