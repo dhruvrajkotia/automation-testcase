@@ -241,9 +241,9 @@ class EvaluateService:
                                          faithfulness, answer_relevancy])
         relevancy_score = result.to_pandas()['answer_relevancy'].iloc[0]
         
-        os.environ["RAGAS_APP_TOKEN"] = RAGAS_API_KEY
+        '''os.environ["RAGAS_APP_TOKEN"] = RAGAS_API_KEY
 
-        result = result.upload()
+        result = result.upload()'''
         return relevancy_score >= threshold, relevancy_score
     
     
