@@ -16,6 +16,7 @@ from langserve import RemoteRunnable
 import numpy as np
 from fastapi import FastAPI
 from dotenv import load_dotenv
+from datasets import Dataset
 
 load_dotenv()
 
@@ -44,6 +45,7 @@ def sanitize_for_json(data):
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 MIDDLEWARE_URL = os.getenv("MIDDLEWARE_URL")
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+RAGAS_API_KEY = os.getenv("RAGAS_API_KEY")
 
 # Initialize reusable objects
 embeddings = OpenAIEmbeddings(
@@ -122,8 +124,7 @@ class EvaluateService:
                     results = await self._evaluate_test_case(
                         test_case, session_id, retriever, bot_details, kbs)
                     test_results.append(results)
-
-            return test_results  # Return payload with test results
+            return test_results 
 
         except Exception as e:
             return {"error": str(e)}
@@ -220,7 +221,7 @@ class EvaluateService:
             doc.page_content for doc in retriever.invoke(question)]
         relevancy_passed, relevancy_score = await self._evaluate_ragas(
             question, answer, contexts, test_case_details['success_criteria']['threshold'])
-        return {"question": question, "expecxted_response": expected_answer, "bot_response": answer, "contexts": contexts,
+        return {"question": question, "expected_response": expected_answer, "bot_response": answer, "contexts": contexts,
                 "accuracy_score": relevancy_score, "matched": relevancy_passed, "result": "Passed" if relevancy_passed else "Failed"}
 
     async def _check_semantic_similarity(self, expected_response: str, bot_response: str) -> bool:
@@ -239,7 +240,12 @@ class EvaluateService:
         result = await run_in_threadpool(evaluate, dataset=dataset, metrics=[
                                          faithfulness, answer_relevancy])
         relevancy_score = result.to_pandas()['answer_relevancy'].iloc[0]
+        
+        os.environ["RAGAS_APP_TOKEN"] = RAGAS_API_KEY
+
+        result = result.upload()
         return relevancy_score >= threshold, relevancy_score
+    
     
     '''async def trigger_service(self):
         result = await self.start_process()

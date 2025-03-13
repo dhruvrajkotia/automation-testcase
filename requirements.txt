@@ -8,6 +8,7 @@ annotated-types==0.7.0
 anyio==4.6.2.post1
 appdirs==1.4.4
 asgiref==3.8.1
+async-timeout==4.0.3
 asyncio==3.4.3
 attrs==24.2.0
 backoff==2.2.1
@@ -25,6 +26,7 @@ dataclasses-json==0.6.7
 datasets==3.0.2
 Deprecated==1.2.14
 dill==0.3.8
+diskcache==5.6.3
 distro==1.9.0
 dnspython==2.7.0
 durationpy==0.9
@@ -125,7 +127,7 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 pytz==2024.2
 PyYAML==6.0.2
-ragas==0.2.2
+ragas==0.2.14
 referencing==0.35.1
 regex==2024.9.11
 requests==2.32.3
@@ -147,6 +149,7 @@ tenacity==8.5.0
 tiktoken==0.8.0
 tokenizers==0.20.1
 toml==0.10.2
+tomli==2.2.1
 tornado==6.4.1
 tqdm==4.66.5
 typer==0.12.5
